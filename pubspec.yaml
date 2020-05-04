@@ -1,0 +1,16 @@
+name: access_warrant
+description:
+  A package responsible for granting access rights to a specific part in the widget tree.
+version: 0.0.1
+homepage: https://github.com/alex-myznikov/access_warrant.git
+
+environment:
+  sdk: ">=2.1.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
