@@ -1,33 +1,38 @@
 import 'package:flutter/material.dart';
 
-/// This widget controls access to a certain part in a widgets tree.
+/// This widget provides a way to control access to a specific widget subtree
+/// with a conception called hereinafter “warrant check”.
 ///
-/// Provide [check] callback to validate access rights to the [validBuilder].
-/// Provide [wrongBuilder] to handle case if the validation has failed.
+/// Provide a [validBuilder] to build a view of restricted access.
+/// Provide a [check] callback to verify access rights to the [validBuilder] result.
+/// Provide a [wrongBuilder] to build a view for case if warrant check has failed.
 class AccessWarrant extends StatefulWidget {
-  /// Checks access rights to a widget built by [validBuilder].
+  /// Checks warrant for the widget subtree built by [valid Builder].
   ///
-  /// Returns `true` if access is allowed and `false` otherwise.
+  /// Procedure of the check is literally any business logic that approves or denies
+  /// access rights to specific part of the application. Returns `true` if access is
+  /// granted and `false` otherwise.
   final bool Function() check;
 
-  /// Builds content of a [AccessWarrant] in case access is granted.
+  /// Builds a widget tree in case the warrant check went successful.
   ///
   /// ```dart
   /// AccessWarrant(
-  ///   validBuilder: (context) => Text('Restricted area'),
+  ///   validBuilder: (context) => Text('Restricted area.'),
   /// )
   /// ```
   ///
-  /// By default it will build an empty [Container].
+  /// If omitted in constructor, it will build an empty [Container].
   final WidgetBuilder validBuilder;
 
-  /// Builds [AccessWarrant]'s content for case of restricted access.
+  /// Builds a widget tree in case the warrant is wrong. Usually serves to show an authentication page
+  /// or original page with reduced number of widgets available for open usage.
   ///
-  /// Usually serves to show an authentication widget. This widget can then handle authentication
-  /// and authorization and notify the [AccessWarrant] to grant access to the restricted area like so:
+  /// This widget can then handle authentication or other procedure of getting valid warrant
+  /// to pass the check and access the restricted area like so:
   /// `AccessWarrant.grantAccess(context)`.
   ///
-  /// By default it will build an empty [Container].
+  /// If omitted in constructor, it will build an empty [Container].
   final WidgetBuilder wrongBuilder;
 
   AccessWarrant({
@@ -39,13 +44,13 @@ class AccessWarrant extends StatefulWidget {
         wrongBuilder = wrongBuilder ?? ((_) => Container()),
         super(key: key);
 
-  /// Obtains the nearest [AccessWarrant] up its widget tree and updates it access state to 'allowed'.
+  /// Obtains the nearest [AccessWarrant] up its widget tree and makes its warrant valid.
   static void grantAccess(BuildContext context) {
-    final _AccessWarrantState warrant =
+    final _AccessWarrantState warrantState =
         context.findAncestorStateOfType<_AccessWarrantState>();
 
     assert(
-      warrant != null,
+      warrantState != null,
       '''
 AccessWarrant requested with a context that does not include an AccessWarrant.
 
@@ -54,7 +59,7 @@ that is a descendant of an AccessWarrant widget.
 ''',
     );
 
-    warrant.grantAccess();
+    warrantState.grantAccess();
   }
 
   @override
@@ -62,49 +67,46 @@ that is a descendant of an AccessWarrant widget.
 }
 
 class _AccessWarrantState extends State<AccessWarrant> {
-  /// Whether access to the restricted area is allowed or not.
-  /// 
-  /// In `null` then [AccessWarrant.check] must be executed to assign the value to this field.
-  bool _accessAllowed;
+  /// Whether the warrant is valid or not.
+  ///
+  /// In `null` then [AccessWarrant.check] must be executed to assign value to this field.
+  bool _isValid;
 
   /// State of the closest [Navigator] instance up the widgets tree.
   NavigatorState _navigator;
 
   /// Current active route.
   ///
-  /// Is used in case of navigation to the restricted area after access right is granted.
+  /// Is used in case of navigation to the restricted area after the warrant gets valid.
   /// See [grantAccess] for details.
-  /// ().
-  ModalRoute _activeRoute;
+  MaterialPageRoute _activeRoute;
 
   @override
   Widget build(BuildContext context) {
     _navigator = Navigator.of(context);
     _activeRoute = ModalRoute.of(context);
 
-    if (_accessAllowed == null) _accessAllowed = widget.check();
+    if (_isValid == null) _isValid = widget.check();
 
-    return !_accessAllowed
-        ? Builder(builder: widget.wrongBuilder)
-        : Builder(builder: widget.validBuilder);
+    return _isValid
+        ? Builder(builder: widget.validBuilder)
+        : Builder(builder: widget.wrongBuilder);
   }
 
-  /// Updates the current access right state and handles it.
+  /// Updates the warrant state and rebuilds the current route pushing it on top of the stack and removing the old route after the animation.
   ///
-  /// Extracts route parameters from the current active route and then passes them to the replacement.
-  /// The new route's widget tree will have no [AccessWarrant] widget in it. Instead only the result of
-  /// calling [AccessWarrant.validBuilder] on that warrant will be attached.
+  /// [AccessWarrant.check] is called again on the new route so the warrant state should be
+  /// persisted in any appropriate way between the two routes to make AccessWarrant behaviour change.
   Future<void> grantAccess() async {
-    if (_accessAllowed) return;
+    if (_isValid) return;
 
-    _accessAllowed = true;
+    _isValid = true;
     await _navigator.pushReplacement(
       MaterialPageRoute(
-        builder: widget.validBuilder,
-        settings: _activeRoute.settings.copyWith(isInitialRoute: false),
+        builder: _activeRoute.builder,
+        settings: _activeRoute.settings,
         maintainState: _activeRoute.maintainState,
       ),
     );
   }
 }
-

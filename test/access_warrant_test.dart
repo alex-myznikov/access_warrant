@@ -5,40 +5,40 @@ import 'package:access_warrant/access_warrant.dart';
 import 'utils.dart';
 
 void main() {
-  testWidgets('Shows wrongBuilder widget if access check failed',
+  testWidgets('Shows wrongBuilder widget if warrant is wrong',
       (WidgetTester tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: AccessWarrant(
-          wrongBuilder: (_) => Text('Authorization failed!'),
+          wrongBuilder: (_) => Text('Warrant check failed!'),
           check: () => false,
         ),
       ),
     );
 
-    final textFinder = find.text('Authorization failed!');
+    final textFinder = find.text('Warrant check failed!');
 
     expect(textFinder, findsOneWidget);
   });
 
-  testWidgets('Shows validBuilder widget if access check passed',
+  testWidgets('Shows validBuilder widget if warrant is valid',
       (WidgetTester tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: AccessWarrant(
-          validBuilder: (_) => Text('Authorization succeeded!'),
+          validBuilder: (_) => Text('Warrant check succeeded!'),
           check: () => true,
         ),
       ),
     );
 
-    final textFinder = find.text('Authorization succeeded!');
+    final textFinder = find.text('Warrant check succeeded!');
 
     expect(textFinder, findsOneWidget);
   });
 
   testWidgets(
-      'Shows an empty Container if widget for certain access state is absent',
+      'Shows an empty Container if widget for certain warrant state is absent',
       (WidgetTester tester) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -63,9 +63,10 @@ void main() {
     expect(containerFinder, findsOneWidget);
   });
 
-  testWidgets('Navigates to validBuilder widget after access is granted',
+  testWidgets('Rebuilds the route with the new state after access is granted',
       (WidgetTester tester) async {
     final observer = NavigatorObserverMock();
+    bool warrantIsValid = false;
 
     await tester.pumpWidget(
       MaterialApp(
@@ -73,10 +74,13 @@ void main() {
           builder: (BuildContext context) {
             return AccessWarrant(
               wrongBuilder: (context) => RaisedButton(
-                onPressed: () => AccessWarrant.grantAccess(context),
+                onPressed: () {
+                  warrantIsValid = true;
+                  AccessWarrant.grantAccess(context);
+                },
               ),
               validBuilder: (_) => Text('Navigation successful!'),
-              check: () => false,
+              check: () => warrantIsValid,
             );
           },
         ),
@@ -107,10 +111,9 @@ void main() {
     expect(find.text('Navigation successful!'), findsOneWidget);
   });
 
-  // TODO: skipNavigation - rebuild AccessWarrant instead of navigating to
-  // AccessWarrant.validBuilder when access approved
+  // TODO: skipNavigation - rebuild AccessWarrant instead of doing Navigator.pushReplacement on warrant state change
 
-  // TODO: clearHistory - clear the previous navigation history when access approved
+  // TODO: clearHistory - clear the navigation history before the current route after the navigation
 
   // TODO: copyWith - copy this AccessWarrant with some new parameters
 }
