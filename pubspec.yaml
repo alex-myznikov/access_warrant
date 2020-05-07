@@ -1,7 +1,7 @@
 name: access_warrant
 description:
-  A package responsible for granting access rights to a specific part in the widget tree.
-version: 0.0.1
+  A package that controls (guards) access to a specific part in application widget tree.
+version: 0.0.2
 homepage: https://github.com/alex-myznikov/access_warrant.git
 
 environment:
