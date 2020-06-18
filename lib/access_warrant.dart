@@ -7,10 +7,10 @@ import 'package:flutter/material.dart';
 /// Provide a [check] callback to verify access rights to the [validBuilder] result.
 /// Provide a [wrongBuilder] to build a view for case if warrant check has failed.
 class AccessWarrant extends StatefulWidget {
-  /// Checks warrant for the widget subtree built by [valid Builder].
+  /// Checks warrant for the widget subtree built by a [validBuilder].
   ///
   /// Procedure of the check is literally any business logic that approves or denies
-  /// access rights to specific part of the application. Returns `true` if access is
+  /// access rights to the specific part of the application. Returns `true` if access is
   /// granted and `false` otherwise.
   final bool Function() check;
 
@@ -100,7 +100,6 @@ class _AccessWarrantState extends State<AccessWarrant> {
   Future<void> grantAccess() async {
     if (_isValid) return;
 
-    _isValid = true;
     await _navigator.pushReplacement(
       MaterialPageRoute(
         builder: _activeRoute.builder,
@@ -108,5 +107,6 @@ class _AccessWarrantState extends State<AccessWarrant> {
         maintainState: _activeRoute.maintainState,
       ),
     );
+    _isValid = true;
   }
 }
